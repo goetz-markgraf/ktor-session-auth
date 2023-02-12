@@ -1,0 +1,15 @@
+version: '3.5'
+
+services:
+  ldap-aquar:
+    container_name: ldap-aquar
+    image: rroemhild/test-openldap
+    ports:
+      - "10389:10389"
+      - "10636:10636"
+    networks:
+      - local-network
+
+networks:
+  local-network:
+    driver: bridge
