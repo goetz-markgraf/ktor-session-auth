@@ -81,3 +81,12 @@ private fun isValidLoginLDAP(loginRequestBody: LoginRequest) =
         "ldap://localhost:10389",
         "cn=%s,ou=people,dc=planetexpress,dc=com"
     ) != null
+
+
+
+@Serializable
+data class WhoAmIResponse(val user: String, val accessRights: List<String>) {
+    companion object {
+        fun fromPrincipal(session: SessionContent) = WhoAmIResponse(session.user, session.accessRights)
+    }
+}
