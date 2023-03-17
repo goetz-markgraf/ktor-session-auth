@@ -89,10 +89,7 @@ private fun validateInLDAP(loginRequestBody: LoginRequest): Boolean {
         UserPasswordCredential(loginRequestBody.username, loginRequestBody.password),
         "ldap://localhost:10389",
         "cn=%s,ou=people,dc=planetexpress,dc=com"
-    ) {
-        // do something with the context in `this`
-        UserIdPrincipal(it.name)
-    }
+    )
 
     return user != null
 }
