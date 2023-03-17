@@ -11,10 +11,19 @@ import io.ktor.server.sessions.*
 import kotlinx.serialization.Serializable
 import kotlin.collections.set
 
-data class SessionContent(val user: String, val accessRights: List<String>) : Principal
+data class SessionContent(val user: String) : Principal
 
 @Serializable
 data class LoginRequest(val username: String, val password: String)
+
+@Serializable
+data class WhoAmIResponse(val user: String) {
+    companion object {
+        fun fromPrincipal(session: SessionContent) = WhoAmIResponse(session.user)
+    }
+}
+
+
 
 fun Application.configureSecurity() {
     install(Sessions) {
@@ -41,8 +50,9 @@ fun Application.configureSecurity() {
         route("/public") {
             post("/login") {
                 val loginRequestBody = call.receive<LoginRequest>()
-                if (isValidLoginLDAP(loginRequestBody)) {
-                    call.sessions.set(SessionContent(loginRequestBody.username, emptyList()))
+                val correct = validateInLDAP(loginRequestBody)
+                if (correct) {
+                    call.sessions.set(SessionContent(loginRequestBody.username))
                     call.respond(HttpStatusCode.OK)
                 } else {
                     call.respond(HttpStatusCode.Forbidden)
@@ -55,7 +65,6 @@ fun Application.configureSecurity() {
             }
         }
 
-        
         authenticate {
             route("/api") {
                 get("/who-am-i") {
@@ -70,23 +79,20 @@ fun Application.configureSecurity() {
 
 
 
-private fun isValidLogin(loginRequestBody: LoginRequest) =
+private fun validateLocally(loginRequestBody: LoginRequest) =
     loginRequestBody.username == "Philip J. Fry" && loginRequestBody.password == "fry"
 
 
 
-private fun isValidLoginLDAP(loginRequestBody: LoginRequest) =
-    ldapAuthenticate(
+private fun validateInLDAP(loginRequestBody: LoginRequest): Boolean {
+    val user = ldapAuthenticate(
         UserPasswordCredential(loginRequestBody.username, loginRequestBody.password),
         "ldap://localhost:10389",
         "cn=%s,ou=people,dc=planetexpress,dc=com"
-    ) != null
-
-
-
-@Serializable
-data class WhoAmIResponse(val user: String, val accessRights: List<String>) {
-    companion object {
-        fun fromPrincipal(session: SessionContent) = WhoAmIResponse(session.user, session.accessRights)
+    ) {
+        // do something with the context in `this`
+        UserIdPrincipal(it.name)
     }
+
+    return user != null
 }

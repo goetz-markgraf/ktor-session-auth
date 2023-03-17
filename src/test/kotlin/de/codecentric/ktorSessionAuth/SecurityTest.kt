@@ -13,25 +13,28 @@ import io.ktor.server.testing.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ApplicationTest {
+class SecurityTest {
     @Test
     fun `should login successfully`() = clientTest { client ->
 
-        val responseLogin = client.post("/public/login") {
+        client.post("/public/login") {
             contentType(ContentType.Application.Json)
             setBody(LoginRequest("Philip J. Fry", "fry"))
+        }.let {
+            assertEquals(HttpStatusCode.OK, it.status)
         }
-        assertEquals(HttpStatusCode.OK, responseLogin.status)
 
-        val whoAmI = client.get("/api/who-am-i")
-        assertEquals(HttpStatusCode.OK, whoAmI.status)
-        assertEquals(WhoAmIResponse("Philip J. Fry", emptyList()), whoAmI.body())
+        client.get("/api/who-am-i").let {
+            assertEquals(HttpStatusCode.OK, it.status)
+            assertEquals(WhoAmIResponse("Philip J. Fry"), it.body())
+        }
     }
 
     @Test
     fun `should not be able to call who-am-i without login first`() = clientTest { client ->
-        val whoAmI = client.get("/api/who-am-i")
-        assertEquals(HttpStatusCode.Forbidden, whoAmI.status)
+        client.get("/api/who-am-i").let {
+            assertEquals(HttpStatusCode.Forbidden, it.status)
+        }
     }
 }
 
