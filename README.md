@@ -1,3 +1,3 @@
 # ktor-session-auth
 
-Repository for the article on blog.codecentric.de
+Repository for the articles on http://blog.codecentric.de
